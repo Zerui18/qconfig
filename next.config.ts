@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   },
   // If deploying to https://<USERNAME>.github.io/<REPO_NAME>/
   // Set basePath to '/<REPO_NAME>'
-  // basePath: '/qconfig', 
+  basePath: '/qconfig',
 };
 
 export default nextConfig;
