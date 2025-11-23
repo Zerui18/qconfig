@@ -1,0 +1,36 @@
+# Tasks
+
+- [x] Project Setup <!-- id: 0 -->
+    - [x] Initialize Next.js project <!-- id: 1 -->
+    - [x] Install dependencies (`lucide-react`) <!-- id: 2 -->
+    - [x] Configure Tailwind CSS <!-- id: 3 -->
+- [x] Core Architecture & State <!-- id: 4 -->
+    - [x] Define initial data structures (keymaps, leds, palette) <!-- id: 5 -->
+    - [x] Implement main `App` state management <!-- id: 6 -->
+- [x] Visual Rendering <!-- id: 7 -->
+    - [x] Create `KeyCap` component <!-- id: 8 -->
+    - [x] Create `KeyboardHand` component with specific geometry <!-- id: 9 -->
+    - [x] Implement Thumb Cluster rotation and layout <!-- id: 10 -->
+- [x] Interactions <!-- id: 11 -->
+    - [x] Implement Selection System (Click, Drag, Modifier) <!-- id: 12 -->
+    - [x] Implement Canvas Navigation (Pan) <!-- id: 13 -->
+- [x] Editing Features <!-- id: 14 -->
+    - [x] Refactor Palette (Compact, Color Picker) <!-- id: 15 -->
+    - [x] Implement Config Import (Regex Parser) <!-- id: 16 -->
+    - [x] Keycode text input <!-- id: 17 -->
+- [x] Code Generation <!-- id: 18 -->
+    - [x] Improve Code Formatting (Matrix alignment) <!-- id: 19 -->
+    - [x] Add Copy to Clipboard functionality <!-- id: 20 -->
+- [x] Bug Fixes & Polish <!-- id: 21 -->
+    - [x] Fix Selection Glitch <!-- id: 22 -->
+    - [x] Fix Shift Cursor Feedback <!-- id: 23 -->
+    - [x] Fix Import Mapping (Row-major to Hand-major) <!-- id: 24 -->
+    - [x] Hide KC_TRNS text <!-- id: 25 -->
+    - [x] Verify layout against spec <!-- id: 26 -->
+    - [x] Check responsive design and styling <!-- id: 27 -->
+    - [x] Add Key Type Legends <!-- id: 28 -->
+- [ ] Layer Management & Persistence <!-- id: 29 -->
+    - [ ] Implement LocalStorage persistence <!-- id: 30 -->
+    - [ ] Update initial state to single layer <!-- id: 31 -->
+    - [ ] Add "Create Layer" button <!-- id: 32 -->
+    - [ ] Implement Context Menu for Layer Deletion <!-- id: 33 -->
