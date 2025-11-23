@@ -40,6 +40,9 @@ This walkthrough documents the verification of the Moonlander QMK Configurator a
 - [x] Verify "Off" is permanent and non-editable (first palette entry, no delete button).
 - [x] Verify import extracts unique colors and creates palette entries named "Imported 1", "Imported 2", etc.
 - [x] Verify color system uses HSV format natively.
+- [x] **New:** Verify default palette is empty (except "Off").
+- [x] **New:** Verify parser handles `#define COLOR_NAME` macros and adds them to the palette.
+- [x] **New:** Verify parser handles mixed usage of macros and inline colors in `ledmap`.
 
 ### 4. Code Generation
 - [x] Verify `keymap.c` generation matches configuration.
@@ -52,7 +55,7 @@ This walkthrough documents the verification of the Moonlander QMK Configurator a
 - [x] Verify `#include QMK_KEYBOARD_H` is removed.
 - [x] Verify `RGB_MATRIX_LED_COUNT` is used instead of `DRIVER_LED_TOTAL`.
 - [x] Verify correct row construction for Moonlander layout (Row 5: 12 keys, Row 6: 6 keys).
-- [x] **New:** Verify correct LED mapping (Column-Major <-> Hand-Major) for both import and export.
+- [x] Verify correct LED mapping (Column-Major <-> Hand-Major) for both import and export.
 
 ### 5. Layer Management & Persistence
 - [x] Verify initial state starts with only Layer 0.
@@ -63,4 +66,4 @@ This walkthrough documents the verification of the Moonlander QMK Configurator a
 
 ## Results
 Verification successful. All features including recent fixes are functional.
-- LED Mapping: Confirmed that the application correctly maps between the Moonlander's column-major LED matrix and the application's hand-major visual layout for both import and export.
+- Palette & Macros: Confirmed that the default palette is empty (except "Off"), and the parser correctly extracts color macros from imported code, adding them to the palette with their defined names. Inline colors are still handled as "Imported X".

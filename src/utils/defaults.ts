@@ -1,14 +1,7 @@
 import { Keymap, LedMap, PaletteItem } from '../types';
 
 export const DEFAULT_PALETTE: PaletteItem[] = [
-    { id: 1, h: 0, s: 255, v: 255, name: 'Red' },        // RGB(255,0,0)
-    { id: 2, h: 85, s: 255, v: 255, name: 'Green' },     // RGB(0,255,0)
-    { id: 3, h: 170, s: 255, v: 255, name: 'Blue' },     // RGB(0,0,255)
-    { id: 4, h: 43, s: 255, v: 255, name: 'Yellow' },    // RGB(255,255,0)
-    { id: 5, h: 191, s: 128, v: 128, name: 'Purple' },   // RGB(128,0,128)
-    { id: 6, h: 128, s: 255, v: 255, name: 'Cyan' },     // RGB(0,255,255)
-    { id: 7, h: 0, s: 0, v: 255, name: 'White' },        // RGB(255,255,255)
-    { id: 8, h: 0, s: 0, v: 0, name: 'Off' },            // RGB(0,0,0)
+    { id: 1, h: 0, s: 0, v: 0, name: 'Off' },            // RGB(0,0,0)
 ];
 
 const EMPTY_KEYMAP = Array(72).fill('KC_TRANSPARENT');

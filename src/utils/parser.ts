@@ -90,7 +90,22 @@ export const parseConfig = (code: string): { keymaps: Keymap; leds: LedMap; pale
             }
         }
 
-        // 2. Parse LED Maps
+        // 2. Parse Color Macros
+        const macroPalette = new Map<string, { h: number, s: number, v: number, name: string }>();
+        const macroRegex = /#define\s+(COLOR_\w+)\s+\{(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\}/g;
+        let macroMatch;
+        while ((macroMatch = macroRegex.exec(code)) !== null) {
+            const name = macroMatch[1].replace('COLOR_', '').replace(/_/g, ' ').toLowerCase()
+                .replace(/\b\w/g, c => c.toUpperCase()); // Title Case
+            macroPalette.set(macroMatch[1], {
+                h: parseInt(macroMatch[2]),
+                s: parseInt(macroMatch[3]),
+                v: parseInt(macroMatch[4]),
+                name: name
+            });
+        }
+
+        // 3. Parse LED Maps
         // Find "ledmap" array definition (flexible to handle various formats)
         // Common formats: "ledmap[][DRIVER_LED_TOTAL][3]" or "ledmap[][RGB_MATRIX_LED_COUNT][3]"
         let ledmapIdx = code.indexOf("ledmap");
@@ -128,27 +143,60 @@ export const parseConfig = (code: string): { keymaps: Keymap; leds: LedMap; pale
 
                     if (block) {
                         const content = block.content;
-                        // Parse {r,g,b} tuples
-                        const tuples: [number, number, number][] = [];
-                        const tupleRegex = /\{\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\}/g;
-                        let tupleMatch;
+                        // Parse tuples {h,s,v} OR macro names
+                        // We need to split by commas but respect braces
+                        const items: string[] = [];
+                        let currentItem = '';
+                        let braceDepth = 0;
 
-                        while ((tupleMatch = tupleRegex.exec(content)) !== null) {
-                            tuples.push([
-                                parseInt(tupleMatch[1]),
-                                parseInt(tupleMatch[2]),
-                                parseInt(tupleMatch[3])
-                            ]);
+                        for (let i = 0; i < content.length; i++) {
+                            const char = content[i];
+                            if (char === '{') braceDepth++;
+                            if (char === '}') braceDepth--;
+
+                            if (char === ',' && braceDepth === 0) {
+                                if (currentItem.trim()) items.push(currentItem.trim());
+                                currentItem = '';
+                            } else {
+                                currentItem += char;
+                            }
                         }
+                        if (currentItem.trim()) items.push(currentItem.trim());
+
+                        const parsedLeds: [number, number, number][] = [];
+
+                        items.forEach(item => {
+                            // Check for tuple {h,s,v}
+                            const tupleMatch = /\{\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\}/.exec(item);
+                            if (tupleMatch) {
+                                parsedLeds.push([
+                                    parseInt(tupleMatch[1]),
+                                    parseInt(tupleMatch[2]),
+                                    parseInt(tupleMatch[3])
+                                ]);
+                            } else {
+                                // Check for macro
+                                const macroName = item.trim();
+                                if (macroPalette.has(macroName)) {
+                                    const color = macroPalette.get(macroName)!;
+                                    parsedLeds.push([color.h, color.s, color.v]);
+                                } else if (macroName === 'COLOR_OFF' || macroName === '{0,0,0}') {
+                                    parsedLeds.push([0, 0, 0]);
+                                } else {
+                                    // Unknown or 0
+                                    parsedLeds.push([0, 0, 0]);
+                                }
+                            }
+                        });
 
                         // Ensure 72 LEDs
-                        if (tuples.length < 72) {
-                            while (tuples.length < 72) tuples.push([0, 0, 0]);
-                        } else if (tuples.length > 72) {
-                            tuples.length = 72;
+                        if (parsedLeds.length < 72) {
+                            while (parsedLeds.length < 72) parsedLeds.push([0, 0, 0]);
+                        } else if (parsedLeds.length > 72) {
+                            parsedLeds.length = 72;
                         }
 
-                        leds[layerId] = tuples;
+                        leds[layerId] = parsedLeds;
                         ledSearchIdx = block.endIdx; // This is relative to ledContent start? No, extractBlock returns index relative to its input string?
                         // Wait, extractBlock returns endIdx relative to the start of `source`.
                         // Here `source` is `ledContent`. So `block.endIdx` is the index in `ledContent`.
@@ -251,32 +299,62 @@ export const parseConfig = (code: string): { keymaps: Keymap; leds: LedMap; pale
 
         if (Object.keys(keymaps).length === 0) return null;
 
-        // Extract unique colors from LEDs for palette
-        const uniqueColors = new Map<string, [number, number, number]>();
+        // Extract unique colors from LEDs for palette (only for inline colors not in macros)
+        // Actually, we should rebuild the palette from:
+        // 1. "Off" (Permanent)
+        // 2. Macros found in the file
+        // 3. Any inline colors that don't match a macro (named "Imported X")
+
+        const finalPalette: PaletteItem[] = [
+            { id: 1, h: 0, s: 0, v: 0, name: 'Off' }
+        ];
+
+        // Add macros to palette
+        let nextId = 2;
+        macroPalette.forEach((color, macroName) => {
+            // Skip if it's basically black/off
+            if (color.h === 0 && color.s === 0 && color.v === 0) return;
+
+            finalPalette.push({
+                id: nextId++,
+                h: color.h,
+                s: color.s,
+                v: color.v,
+                name: color.name
+            });
+        });
+
+        // Find inline colors that are NOT covered by the macros
+        const existingColorKeys = new Set<string>();
+        finalPalette.forEach(p => existingColorKeys.add(`${p.h},${p.s},${p.v}`));
+
+        const inlineColors = new Map<string, [number, number, number]>();
         Object.values(leds).forEach(layerLeds => {
             layerLeds.forEach(([h, s, v]) => {
-                // Skip black (off) as it's the permanent first entry
-                if (h === 0 && s === 0 && v === 0) return;
                 const key = `${h},${s},${v}`;
-                if (!uniqueColors.has(key)) {
-                    uniqueColors.set(key, [h, s, v]);
+                if (!existingColorKeys.has(key) && !inlineColors.has(key)) {
+                    // Skip black
+                    if (h === 0 && s === 0 && v === 0) return;
+                    inlineColors.set(key, [h, s, v]);
                 }
             });
         });
 
-        // Create palette from unique colors
-        const palette = [
-            { id: 1, h: 0, s: 0, v: 0, name: 'Off' }, // Permanent first entry
-            ...Array.from(uniqueColors.values()).map((color, i) => ({
-                id: i + 2,
+        // Add inline colors to palette
+        let importedCount = 1;
+        inlineColors.forEach((color) => {
+            finalPalette.push({
+                id: nextId++,
                 h: color[0],
                 s: color[1],
                 v: color[2],
-                name: `Imported ${i + 1}`
-            }))
-        ];
+                name: `Imported ${importedCount++}`
+            });
+        });
 
-        return { keymaps, leds, palette };
+        return { keymaps, leds, palette: finalPalette };
+
+
     } catch (e) {
         console.error("Parse error:", e);
         return null;
