@@ -87,7 +87,6 @@ export const generateCode = (keymaps: Keymap, leds: LedMap, palette: PaletteItem
                 }
             });
             result += '\n';
-            result += '\n';
         });
 
         return result;

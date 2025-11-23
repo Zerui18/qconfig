@@ -53,8 +53,8 @@ export const KeyCap: React.FC<KeyCapProps> = ({
             textClass = 'text-red-200';
             break;
         case 'special':
-            bgClass = 'bg-yellow-900/50';
-            textClass = 'text-yellow-200';
+            bgClass = 'bg-purple-900/50';
+            textClass = 'text-purple-200';
             break;
         case 'alpha':
         default:
