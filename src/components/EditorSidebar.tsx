@@ -13,6 +13,7 @@ interface EditorSidebarProps {
     onColorApply: (color: [number, number, number]) => void;
     generatedCode: string;
     onImportConfig: (code: string) => void;
+    onShowToast: (message: string, type?: 'success' | 'info' | 'error') => void;
 }
 
 // Helper to convert RGB to Hex
@@ -37,6 +38,7 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
     onColorApply,
     generatedCode,
     onImportConfig,
+    onShowToast,
 }) => {
     const [activeTab, setActiveTab] = useState<'edit' | 'code' | 'import'>('edit');
     const [activeColorId, setActiveColorId] = useState<number | null>(null);
@@ -107,14 +109,14 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
 
     const copyToClipboard = () => {
         navigator.clipboard.writeText(generatedCode);
-        alert('Code copied to clipboard!');
+        onShowToast('Code copied to clipboard!', 'success');
     };
 
     const handleImport = () => {
         onImportConfig(importText);
         setImportText('');
         setActiveTab('edit');
-        alert('Configuration imported!');
+        onShowToast('Configuration imported!', 'success');
     };
 
     return (
@@ -186,8 +188,8 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
                                             <div className="relative">
                                                 <div
                                                     className={`w-8 h-8 rounded border border-gray-600 shadow-sm ${isPermanent
-                                                            ? 'cursor-not-allowed opacity-75'
-                                                            : 'cursor-pointer hover:border-white transition-all'
+                                                        ? 'cursor-not-allowed opacity-75'
+                                                        : 'cursor-pointer hover:border-white transition-all'
                                                         }`}
                                                     style={{ backgroundColor: `rgb(${hsvToRgb(p.h, p.s, p.v).join(',')})` }}
                                                     onClick={() => !isPermanent && setActiveColorId(activeColorId === p.id ? null : p.id)}
@@ -250,7 +252,10 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
                         <div className="flex justify-between items-center mb-3">
                             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">keymap.c</h3>
                             <button
-                                onClick={copyToClipboard}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    copyToClipboard();
+                                }}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-bold transition-colors"
                             >
                                 <Copy size={14} />
@@ -273,7 +278,10 @@ export const EditorSidebar: React.FC<EditorSidebarProps> = ({
                                 Paste your existing <code>keymap.c</code> code below. The app will attempt to parse <code>keymaps</code> and <code>ledmap</code> arrays.
                             </p>
                             <button
-                                onClick={handleImport}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleImport();
+                                }}
                                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded font-bold transition-colors"
                             >
                                 <Upload size={16} />

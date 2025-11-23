@@ -2,11 +2,11 @@ import React from 'react';
 
 export const Legend: React.FC = () => {
   const items = [
-    { label: 'Normal', color: 'bg-gray-800 border-gray-600' },
-    { label: 'Modifier', color: 'bg-blue-900/50 border-blue-500' },
-    { label: 'Layer', color: 'bg-orange-900/50 border-orange-500' },
-    { label: 'Special', color: 'bg-purple-900/50 border-purple-500' },
-    { label: 'Transparent', color: 'bg-gray-900 border-gray-800 opacity-40' },
+    { label: 'Normal', color: 'bg-gray-800' },
+    { label: 'Modifier', color: 'bg-blue-900/50' },
+    { label: 'Layer', color: 'bg-orange-900/50' },
+    { label: 'Special', color: 'bg-purple-900/50' },
+    { label: 'Transparent', color: 'bg-gray-800 opacity-40' },
   ];
 
   return (
@@ -15,7 +15,7 @@ export const Legend: React.FC = () => {
       <div className="space-y-2">
         {items.map((item) => (
           <div key={item.label} className="flex items-center gap-3">
-            <div className={`w-4 h-4 rounded ${item.color} border`} />
+            <div className={`w-4 h-4 rounded ${item.color}`} />
             <span className="text-xs text-gray-400">{item.label}</span>
           </div>
         ))}

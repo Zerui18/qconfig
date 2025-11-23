@@ -9,6 +9,8 @@ import { generateCode } from '../utils/codegen';
 import { parseConfig } from '../utils/parser';
 import { Keymap, LedMap, PaletteItem, Selection } from '../types';
 import { Plus, Trash2 } from 'lucide-react';
+import { Toast } from '../components/Toast';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export default function Home() {
   // State
@@ -31,10 +33,11 @@ export default function Home() {
   const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; layer: number } | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Persistence
   useEffect(() => {
-    const saved = localStorage.getItem('moonlander_config');
+    const saved = localStorage.getItem('moonlander_config_v2');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -48,7 +51,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('moonlander_config', JSON.stringify({ keymaps, leds, palette }));
+    localStorage.setItem('moonlander_config_v2', JSON.stringify({ keymaps, leds, palette }));
   }, [keymaps, leds, palette]);
 
   // Derived State
@@ -258,71 +261,125 @@ export default function Home() {
     }
   };
 
+  // Manual Wheel Listener for non-passive event
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const onWheel = (e: WheelEvent) => {
+      // Always zoom on scroll
+      e.preventDefault();
+      e.stopPropagation();
+
+      let delta = e.deltaY;
+      // Handle horizontal scroll wheels too
+      if (delta === 0 && e.deltaX !== 0) {
+        delta = e.deltaX;
+      }
+
+      // Normalize deltaMode
+      if (e.deltaMode === 1) {
+        delta *= 40; // Typical line height
+      } else if (e.deltaMode === 2) {
+        delta *= 800; // Typical page height
+      }
+
+      // Multiplier for zoom speed
+      const zoomDelta = -delta * 0.002;
+      setZoom((z) => Math.min(Math.max(0.5, z + zoomDelta), 2));
+    };
+    container.addEventListener('wheel', onWheel, { passive: false });
+    return () => container.removeEventListener('wheel', onWheel);
+  }, []);
+
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
+    setToast({ message, type });
+  };
+
+  const handleClearAll = () => {
+    setKeymaps(DEFAULT_KEYMAPS);
+    setLeds(DEFAULT_LEDS);
+    setPalette(DEFAULT_PALETTE);
+    setActiveLayer(0);
+    setSelection([]);
+    setShowClearConfirm(false);
+    showToast('Configuration cleared', 'info');
+  };
+
   return (
     <main className="flex h-screen bg-gray-950 overflow-hidden" onMouseUp={handleMouseUp}>
-      {/* Canvas Area */}
-      <div
-        ref={containerRef}
-        className={`flex-1 relative overflow-hidden cursor-${isPanning ? 'grabbing' : isShiftHeld ? 'grab' : 'default'}`}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-      >
-        {/* Grid Background */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(#4b5563 1px, transparent 1px)', backgroundSize: '20px 20px' }}
-        />
-
-        {/* Keyboard Container with Pan/Zoom */}
+      {/* Left Column Wrapper */}
+      <div className="flex-1 relative overflow-hidden">
+        {/* Interactive Canvas Layer */}
         <div
-          className="absolute inset-0 flex items-center justify-center transition-transform duration-75 ease-out origin-center"
-          style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
+          ref={containerRef}
+          className="absolute inset-0 outline-none"
+          style={{ cursor: isPanning ? 'grabbing' : isShiftHeld ? 'grab' : 'default' }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
         >
-          <div className="flex gap-16">
-            {/* Left Hand */}
-            <div className="keycap-group">
-              <KeyboardHand
-                side="left"
-                keycodes={currentKeycodes.slice(0, 36)}
-                leds={currentLeds.slice(0, 36)}
-                selectedKeys={selection}
-                baseIndex={0}
-                onKeyClick={handleKeyClick}
-                onKeyMouseDown={() => { }} // Handled by click for now
-                onKeyMouseEnter={() => { }}
-              />
-            </div>
+          {/* Grid Background */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none"
+            style={{ backgroundImage: 'radial-gradient(#4b5563 1px, transparent 1px)', backgroundSize: '20px 20px' }}
+          />
 
-            {/* Right Hand */}
-            <div className="keycap-group">
-              <KeyboardHand
-                side="right"
-                keycodes={currentKeycodes.slice(36, 72)}
-                leds={currentLeds.slice(36, 72)}
-                selectedKeys={selection}
-                baseIndex={36}
-                onKeyClick={handleKeyClick}
-                onKeyMouseDown={() => { }}
-                onKeyMouseEnter={() => { }}
-              />
+          {/* Keyboard Container with Pan/Zoom */}
+          <div
+            className="absolute inset-0 flex items-center justify-center transition-transform duration-75 ease-out origin-center"
+            style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
+          >
+            <div className="flex gap-16">
+              {/* Left Hand */}
+              <div className="keycap-group">
+                <KeyboardHand
+                  side="left"
+                  keycodes={currentKeycodes.slice(0, 36)}
+                  leds={currentLeds.slice(0, 36)}
+                  selectedKeys={selection}
+                  baseIndex={0}
+                  onKeyClick={handleKeyClick}
+                  onKeyMouseDown={() => { }} // Handled by click for now
+                  onKeyMouseEnter={() => { }}
+                />
+              </div>
+
+              {/* Right Hand */}
+              <div className="keycap-group">
+                <KeyboardHand
+                  side="right"
+                  keycodes={currentKeycodes.slice(36, 72)}
+                  leds={currentLeds.slice(36, 72)}
+                  selectedKeys={selection}
+                  baseIndex={36}
+                  onKeyClick={handleKeyClick}
+                  onKeyMouseDown={() => { }}
+                  onKeyMouseEnter={() => { }}
+                />
+              </div>
             </div>
           </div>
+
+          {/* Selection Box Overlay */}
+          {isSelecting && (
+            <div
+              className="absolute border border-purple-500 bg-purple-500/20 pointer-events-none"
+              style={{
+                left: Math.min(selectionStart.x, selectionEnd.x),
+                top: Math.min(selectionStart.y, selectionEnd.y),
+                width: Math.abs(selectionEnd.x - selectionStart.x),
+                height: Math.abs(selectionEnd.y - selectionStart.y),
+              }}
+            />
+          )}
         </div>
 
-        {/* Selection Box Overlay */}
-        {isSelecting && (
-          <div
-            className="absolute border border-purple-500 bg-purple-500/20 pointer-events-none"
-            style={{
-              left: Math.min(selectionStart.x, selectionEnd.x),
-              top: Math.min(selectionStart.y, selectionEnd.y),
-              width: Math.abs(selectionEnd.x - selectionStart.x),
-              height: Math.abs(selectionEnd.y - selectionStart.y),
-            }}
-          />
-        )}
+        {/* UI Overlays (Siblings to Canvas) */}
 
         {/* Layer Controls */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 bg-gray-900 p-2 rounded-full border border-gray-800 items-center">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 bg-gray-900 p-2 rounded-full border border-gray-800 items-center z-10">
           {Object.keys(keymaps).map(Number).sort((a, b) => a - b).map((l) => (
             <button
               key={l}
@@ -369,8 +426,66 @@ export default function Home() {
           />
         )}
 
+        {/* Top Controls */}
+        <div className="absolute top-4 left-4 flex gap-2 z-10">
+          <button
+            onClick={() => setShowHelp(true)}
+            className="bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-1.5 rounded-md text-sm font-medium border border-gray-700 transition-colors"
+          >
+            Help
+          </button>
+          <button
+            onClick={() => setShowClearConfirm(true)}
+            className="bg-red-900/30 hover:bg-red-900/50 text-red-200 px-3 py-1.5 rounded-md text-sm font-medium border border-red-900/50 transition-colors"
+          >
+            Clear All
+          </button>
+        </div>
+
+        {/* Help Modal */}
+        {showHelp && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowHelp(false)}>
+            <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+              <h2 className="text-xl font-bold text-white mb-4">How to Use</h2>
+              <div className="space-y-3 text-gray-300 text-sm">
+                <p><strong className="text-purple-400">Selection:</strong> Click to select a key. Drag to box-select multiple keys. </p>
+                <p><strong className="text-purple-400">Navigation:</strong> Scroll to Zoom. Hold <kbd className="bg-gray-800 px-1 rounded">Shift</kbd> + Drag to Pan.</p>
+                <p><strong className="text-purple-400">Editing:</strong> Type in the sidebar to change keycodes. Click palette colors to apply them to selected keys.</p>
+                <p><strong className="text-purple-400">Layers:</strong> Use the bottom controls to add, switch, or delete layers.</p>
+                <p><strong className="text-purple-400">Export:</strong> Copy the generated C code from the sidebar to your QMK keymap file.</p>
+              </div>
+              <button
+                onClick={() => setShowHelp(false)}
+                className="mt-6 w-full bg-purple-600 hover:bg-purple-500 text-white py-2 rounded-lg font-medium transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Legend */}
         <Legend />
+
+        {/* Toast */}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+
+        {/* Confirm Modal */}
+        <ConfirmModal
+          isOpen={showClearConfirm}
+          title="Clear Configuration"
+          message="Are you sure you want to clear everything? This will reset all layers, colors, and settings to default. This action cannot be undone."
+          confirmText="Clear Everything"
+          isDestructive
+          onConfirm={handleClearAll}
+          onCancel={() => setShowClearConfirm(false)}
+        />
       </div>
 
       {/* Sidebar */}
@@ -383,6 +498,7 @@ export default function Home() {
         onColorApply={handleColorApply}
         generatedCode={generatedCode}
         onImportConfig={handleImportConfig}
+        onShowToast={showToast}
       />
     </main >
   );

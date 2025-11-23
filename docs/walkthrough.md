@@ -10,12 +10,16 @@ This walkthrough documents the verification of the Moonlander QMK Configurator a
 - [x] Verify thumb cluster rotation (+12/-12 degrees).
 - [x] Verify keycap styling (borders, backgrounds).
 - [x] Verify "Key Types" legend is visible and accurate.
+- [x] **New:** Verify Row Alignment: Left split rows align to the left (outer edge), Right split rows align to the right (outer edge).
 
 ### 2. Interactions
 - [x] Verify single click selection.
 - [x] Verify drag selection (box).
 - [x] Verify pan/zoom (Shift + Drag).
-- [x] Verify cursor changes to 'grab' when holding Shift.
+- [x] Verify cursor changes to 'grab' when holding Shift (indicating Pan availability).
+- [x] Verify Scroll zooms the canvas (No Shift required).
+- [x] Verify Zoom works with both Mouse Wheel (Line mode) and Trackpad (Pixel mode).
+- [x] **New:** Verify UI controls (Clear All, Help, Layer Buttons) do not trigger canvas interactions (e.g., selection box).
 
 ### 3. Editing
 - [x] Verify keycode text input updates selected key.
@@ -40,9 +44,11 @@ This walkthrough documents the verification of the Moonlander QMK Configurator a
 - [x] Verify "Off" is permanent and non-editable (first palette entry, no delete button).
 - [x] Verify import extracts unique colors and creates palette entries named "Imported 1", "Imported 2", etc.
 - [x] Verify color system uses HSV format natively.
-- [x] **New:** Verify default palette is empty (except "Off").
-- [x] **New:** Verify parser handles `#define COLOR_NAME` macros and adds them to the palette.
-- [x] **New:** Verify parser handles mixed usage of macros and inline colors in `ledmap`.
+- [x] Verify default palette is empty (except "Off").
+- [x] Verify parser handles `#define COLOR_NAME` macros and adds them to the palette.
+- [x] Verify parser handles mixed usage of macros and inline colors in `ledmap`.
+- [x] **New:** Verify "Clear All" uses a custom confirmation modal instead of native alert.
+- [x] **New:** Verify "Copy Code" and "Import" use a custom Toast notification instead of native alert.
 
 ### 4. Code Generation
 - [x] Verify `keymap.c` generation matches configuration.
@@ -64,6 +70,12 @@ This walkthrough documents the verification of the Moonlander QMK Configurator a
 - [x] Verify configuration persistence to `localStorage` (Logic implemented).
 - [x] Verify palette persistence to `localStorage`.
 
+### 6. User Assistance
+- [x] Verify "Help" button opens a modal with instructions.
+- [x] Verify Help Modal content is accurate and concise.
+
 ## Results
-Verification successful. All features including recent fixes are functional.
-- Palette & Macros: Confirmed that the default palette is empty (except "Off"), and the parser correctly extracts color macros from imported code, adding them to the palette with their defined names. Inline colors are still handled as "Imported X".
+Verification successful. All features including recent UI fixes are functional.
+- **Row Alignment**: Left split aligned left, Right split aligned right.
+- **UI Glitches**: Fixed by isolating canvas events from UI overlays.
+- **Custom Dialogs**: Implemented Toast and ConfirmModal for smoother UX.

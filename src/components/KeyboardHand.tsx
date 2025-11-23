@@ -59,7 +59,7 @@ export const KeyboardHand: React.FC<KeyboardHandProps> = ({
     return (
         <div className={`flex flex-col ${isLeft ? 'items-end' : 'items-start'} gap-1 p-4`}>
             {/* Main Block */}
-            <div className={`flex flex-col gap-1 ${isLeft ? 'items-end' : 'items-start'}`}>
+            <div className={`flex flex-col gap-1 ${isLeft ? 'items-start' : 'items-end'}`}>
                 {/* Row 1: Indices 0-6 */}
                 {renderRow(0, 7)}
                 {/* Row 2: Indices 7-13 */}
@@ -67,16 +67,9 @@ export const KeyboardHand: React.FC<KeyboardHandProps> = ({
                 {/* Row 3: Indices 14-20 */}
                 {renderRow(14, 7)}
                 {/* Row 4: Indices 21-26 (6 keys) */}
-                {/* For left hand, these are usually aligned to the right of the block? 
-            Actually on Moonlander, the inner columns are longer. 
-            Let's assume standard alignment for now, maybe add padding.
-            Row 4 has 6 keys. On Left hand, usually the leftmost key is missing or rightmost?
-            Looking at Moonlander: The bottom row (Row 5) is short. Row 4 is almost full.
-            Let's just render them and align them.
-        */}
-                {renderRow(21, 6, isLeft ? 'mr-12' : 'ml-12')}
+                {renderRow(21, 6)}
                 {/* Row 5: Indices 27-31 (5 keys) */}
-                {renderRow(27, 5, isLeft ? 'mr-24' : 'ml-24')}
+                {renderRow(27, 5)}
             </div>
 
             {/* Thumb Cluster */}
