@@ -52,7 +52,7 @@ const LED_TO_APP_MAP = [
     // Col 7 (Inner)
     36, 43, 50,
     // Thumb Bottom
-    69, 70, 71,
+    71, 70, 69,
     // Thumb Top
     68
 ];
